@@ -1,0 +1,242 @@
+/**
+ * Express Gemini Web App
+ * This file sets up an Express server to host a simple web page and handle
+ * requests to the Gemini API, demonstrating a full Node.js app lifecycle.
+ *
+ * Dependencies: express
+ * Setup: npm install express
+ * Run: node express_gemini_app.js
+ */
+
+// Import the Express framework
+const express = require('express');
+const app = express();
+const PORT = 3000;
+
+// The official endpoint for the Gemini API
+const API_URL_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const MODEL_NAME = 'gemini-2.5-flash';
+
+// --- Configuration and Middleware ---
+
+// 1. Hardcoded API Key (FOR QUICK TESTING ONLY - NOT RECOMMENDED FOR PRODUCTION)
+// The user has requested to hardcode the API key for immediate testing.
+const apiKey = 'insert your api key here'; 
+
+// We bypass the environment variable check since the key is hardcoded above.
+
+// 2. Middleware to parse incoming request bodies (for POST requests)
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// --- Frontend (HTML) Route ---
+
+// GET /
+// Serves the main HTML page containing the form.
+app.get('/', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Gemini Node.js Lab</title>
+            <style>
+                body {
+                    font-family: 'Inter', sans-serif;
+                    background-color: #f3f4f6;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    padding: 20px;
+                }
+                .container {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+                    max-width: 600px;
+                    width: 100%;
+                }
+                h1 {
+                    color: #1f2937;
+                    font-size: 1.5rem;
+                    margin-bottom: 20px;
+                    text-align: center;
+                }
+                textarea, button {
+                    width: 100%;
+                    padding: 12px;
+                    margin-bottom: 15px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    box-sizing: border-box;
+                    font-size: 1rem;
+                }
+                button {
+                    background-color: #4f46e5;
+                    color: white;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease, transform 0.1s;
+                }
+                button:hover {
+                    background-color: #4338ca;
+                    transform: translateY(-1px);
+                }
+                #response-area {
+                    background-color: #e5e7eb;
+                    padding: 15px;
+                    border-radius: 8px;
+                    min-height: 100px;
+                    white-space: pre-wrap;
+                    color: #374151;
+                    font-size: 0.9rem;
+                    line-height: 1.5;
+                }
+                #loading-indicator {
+                    text-align: center;
+                    color: #6b7280;
+                    display: none;
+                }
+            </style>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body>
+            <div class="container">
+                <h1>AI Prompt Generator (Model: ${MODEL_NAME})</h1>
+                <form id="prompt-form">
+                    <textarea id="prompt-input" rows="4" placeholder="Enter your prompt here (e.g., 'Write a short Python function to calculate factorial')." required></textarea>
+                    <button type="submit">Ask Gemini</button>
+                </form>
+                <div id="loading-indicator">Thinking...</div>
+                <div id="response-area">Response will appear here.</div>
+            </div>
+
+            <script>
+                const form = document.getElementById('prompt-form');
+                const promptInput = document.getElementById('prompt-input');
+                const responseArea = document.getElementById('response-area');
+                const loadingIndicator = document.getElementById('loading-indicator');
+                const submitButton = form.querySelector('button');
+
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const prompt = promptInput.value.trim();
+                    if (!prompt) return;
+
+                    responseArea.textContent = '';
+                    loadingIndicator.style.display = 'block';
+                    submitButton.disabled = true;
+
+                    try {
+                        const response = await fetch('/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ prompt: prompt })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            responseArea.textContent = data.text;
+                        } else {
+                            responseArea.textContent = \`Error: \${data.error || 'Unknown error occurred.'}\`;
+                        }
+
+                    } catch (error) {
+                        console.error('Fetch error:', error);
+                        responseArea.textContent = 'A network error occurred while reaching the server.';
+                    } finally {
+                        loadingIndicator.style.display = 'none';
+                        submitButton.disabled = false;
+                    }
+                });
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+// --- Backend (API Call) Route ---
+
+// POST /generate
+// Handles the request, calls the Gemini API, and returns the generated text.
+app.post('/generate', async (req, res) => {
+    const userPrompt = req.body.prompt;
+
+    if (!userPrompt) {
+        return res.status(400).json({ error: 'Prompt is required.' });
+    }
+
+    try {
+        const payload = {
+            contents: [{ parts: [{ text: userPrompt }] }],
+        };
+
+        // FIX: Changed template literal to standard string concatenation
+        // to resolve "Failed to parse URL from ${...}" error, which
+        // indicates the template literal was not evaluated correctly.
+        const apiUrl = API_URL_BASE + '?key=' + apiKey;
+        
+        // --- API Call with Exponential Backoff ---
+        let apiResponse;
+        const maxRetries = 3;
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                // Node's native fetch is used for the API call
+                apiResponse = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (apiResponse.ok) {
+                    break; // Success! Exit loop.
+                }
+
+                // If not OK, wait and retry (unless it's the last attempt)
+                if (i < maxRetries - 1) {
+                    const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    // Last attempt failed, throw error
+                    throw new Error(`API request failed with status: ${apiResponse.status}`);
+                }
+
+            } catch (error) {
+                if (i === maxRetries - 1) {
+                    throw error; // Re-throw if all retries failed
+                }
+                // Continue to retry
+            }
+        }
+        // --- End API Call with Exponential Backoff ---
+
+        const result = await apiResponse.json();
+        
+        const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (generatedText) {
+            res.json({ text: generatedText });
+        } else {
+            console.error('Gemini API returned an unexpected response structure:', result);
+            res.status(500).json({ error: 'Failed to generate content. Check server logs.' });
+        }
+
+    } catch (error) {
+        console.error('Error calling Gemini API:', error.message);
+        res.status(500).json({ error: 'Internal Server Error during API processing.' });
+    }
+});
+
+// --- Server Startup ---
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:\${PORT}`);
+    console.log("WARNING: The API key is hardcoded in the file. Remember to move it to an environment variable for production!");
+});
