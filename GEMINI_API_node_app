@@ -19,8 +19,8 @@ const MODEL_NAME = 'gemini-2.5-flash';
 
 // --- Configuration and Middleware ---
 
-// 1. Hardcoded API Key (FOR QUICK TESTING ONLY - NOT RECOMMENDED FOR PRODUCTION)
-// The user has requested to hardcode the API key for immediate testing.
+// Hardcoded API Key (FOR QUICK TESTING ONLY 
+// for production, use the .env file to hold secrets
 const apiKey = 'insert your api key here'; 
 
 // We bypass the environment variable check since the key is hardcoded above.
