@@ -1,0 +1,52 @@
+{
+  "name": "professor-brownbear-gemini-lab",
+  "version": "1.2.1",
+  "description": "Professor Brownbear’s Secret AI Model — a full-stack ExpressJS + Google Gemini API teaching lab for Full Stack Web Development students.",
+  "main": "express_gemini_app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node express_gemini_app.js",
+    "dev": "nodemon express_gemini_app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petersigurdson/professor-brownbear-gemini-lab.git"
+  },
+  "keywords": [
+    "express",
+    "nodejs",
+    "google",
+    "gemini",
+    "api",
+    "ai",
+    "fullstack",
+    "education",
+    "learning-lab",
+    "prompt-engineering"
+  ],
+  "author": {
+    "name": "Professor Brownbear (Peter Sigurdson)",
+    "email": "peter@petersigurdson.net",
+    "url": "http://petersigurdson.com"
+  },
+  "license": "MIT",
+  "homepage": "https://www.npmjs.com/package/professor-brownbear-gemini-lab",
+  "bugs": {
+    "url": "https://github.com/petersigurdson/professor-brownbear-gemini-lab/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.3"
+  },
+  "files": [
+    "express_gemini_app.js",
+    "README.md",
+    "LICENSE"
+  ]
+}
