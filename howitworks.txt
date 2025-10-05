@@ -1,0 +1,146 @@
+# WARP.md
+
+This file provides guidance to WARP (warp.dev) when working with code in this repository.
+
+## Project Overview
+
+**Professor Brownbear's Secret AI Model** is an educational full-stack Node.js + Express web application that demonstrates integration with Google's Gemini API. This is a teaching lab designed to help students understand:
+
+- Secure API key management with environment variables
+- Express.js server architecture and routing
+- Async/await patterns with Node's native fetch()
+- Front-end form submission and response handling
+- Dark/light theme implementation with localStorage persistence
+
+## Development Commands
+
+### Core Commands
+- `npm install` - Install all dependencies
+- `npm start` - Start the Express server (production mode)
+- `npm run dev` - Start with nodemon for live reload during development
+- `node express_gemini_app.js` - Direct server execution
+
+### Environment Setup
+The application requires a `.env` file with:
+```
+GEMINI_API_KEY=your_api_key_here
+```
+
+Get the API key from: https://makersuite.google.com/app/apikey
+
+## Application Architecture
+
+### Single-File Architecture
+This is intentionally a **monolithic single-file application** (`express_gemini_app.js`) for educational clarity. The entire stack is contained in one file:
+
+- **Backend**: Express.js server with two main routes
+- **Frontend**: Complete HTML/CSS/JavaScript served as a string template
+- **API Integration**: Google Gemini API client with retry logic
+
+### Key Architectural Components
+
+#### Server Structure
+- **Port**: 3000 (configurable via `PORT` environment variable)
+- **Model**: Uses `gemini-2.5-flash` model
+- **Static Assets**: Served from `/assets` directory (logo images)
+
+#### Routes
+- `GET /` - Serves the complete frontend application as HTML
+- `POST /generate` - Proxy endpoint for Gemini API requests
+
+#### Frontend Architecture
+- **Theme System**: CSS custom properties with `data-theme` attribute switching
+- **Form Handling**: Vanilla JavaScript with async/await for API calls
+- **State Management**: Theme preference persisted in localStorage
+- **Error Handling**: Network and server error display in UI
+
+#### Retry Logic Pattern
+The application implements exponential backoff for API reliability:
+```
+Attempt 1: Immediate
+Attempt 2: 1 second delay  
+Attempt 3: 2 seconds delay
+Attempt 4: 4 seconds delay
+```
+
+### File Structure
+```
+project-root/
+├── express_gemini_app.js    # Complete application (backend + frontend)
+├── package.json             # Dependencies and scripts
+├── .env                     # API keys (not committed)
+├── .gitignore              # Excludes node_modules and .env
+├── assets/                 # Static branding images
+│   ├── brownbear-logo.png  # Left logo
+│   └── brown.png           # Right logo
+└── readme.md               # Comprehensive project documentation
+```
+
+## Development Patterns
+
+### Error Handling Strategy
+- Environment validation on startup (exits if `GEMINI_API_KEY` missing)
+- API retry logic with exponential backoff
+- Frontend error display for network/server issues
+- Graceful degradation for malformed API responses
+
+### Security Practices
+- API keys stored in environment variables only
+- `.env` file excluded from version control
+- No sensitive data exposed in client-side code
+- Input validation on API endpoints
+
+### Educational Focus Areas
+The codebase is designed to teach:
+1. **Environment Configuration**: Secure API key management
+2. **Async JavaScript**: Modern fetch() with async/await
+3. **Express Fundamentals**: Routing, middleware, static file serving
+4. **Frontend Integration**: Form handling, theme persistence
+5. **Error Resilience**: Retry patterns and user feedback
+
+## Common Development Tasks
+
+### Adding New API Endpoints
+When extending the application with new routes, follow the established pattern:
+- Add route handlers after the existing `/generate` route
+- Use async/await for external API calls
+- Implement proper error handling and validation
+- Return consistent JSON response format
+
+### Modifying the Frontend
+The frontend HTML is embedded as a template string in the `GET /` route. When making UI changes:
+- Maintain the existing theme toggle functionality
+- Preserve responsive design patterns
+- Keep accessibility attributes (aria-labels)
+- Test both dark and light themes
+
+### API Integration Changes
+For modifications to Gemini API integration:
+- Update the `API_URL_BASE` and `MODEL_NAME` constants
+- Maintain the retry logic pattern
+- Preserve the response parsing structure
+- Test error scenarios thoroughly
+
+## Dependencies
+
+### Production Dependencies
+- `express@^4.19.2` - Web framework
+- `dotenv@^16.4.5` - Environment variable loading
+
+### Development Dependencies  
+- `nodemon@^3.1.3` - Development server with live reload
+
+### Node.js Requirements
+- **Minimum Version**: Node 18+ (for native fetch() support)
+- **Recommended**: Node 22+ for optimal performance
+
+## Educational Context
+
+This project is part of the **Full Stack XO Curriculum**, 
+which integrates probabilistic AI controllers into traditional MVC patterns. 
+The application demonstrates the evolution from traditional request/response patterns 
+to AI-enhanced user interactions.
+
+The monolithic architecture is intentional for teaching purposes.
+This allows students to see the complete data flow in a single file while 
+learning fundamental concepts before moving to more complex, distributed architectures.
