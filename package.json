@@ -1,6 +1,6 @@
 {
   "name": "professor-brownbear-gemini-lab",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "Professor Brownbear’s Secret AI Model — a full-stack ExpressJS + Google Gemini API teaching lab for Full Stack Web Development students.",
   "main": "express_gemini_app.js",
   "type": "commonjs",
